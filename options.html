@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage URLs</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon32.png">
+  <style>
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background: #F5F5F5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      max-width: 700px;
+      margin: auto;
+    }
+    h2 { color: #3F51B5; margin-bottom: 10px; }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    /* scrollable list */
+    #urlList {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: #FAFAFA;
+      border: 1px solid #e6e6e6;
+      border-radius: 6px;
+      flex-wrap: nowrap;
+    }
+
+    /* drag handle */
+    .drag-handle {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      color: #666;
+      flex-shrink: 0;
+      user-select: none;
+      font-size: 16px;
+    }
+    .drag-handle:active { cursor: grabbing; }
+
+    .site-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 10px;
+      min-width: 0; /* allows truncation */
+    }
+    .site-info img {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .site-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .site-title {
+      font-size: 14px;
+      color: #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .site-url {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .remove-btn {
+      flex-shrink: 0;
+      background: #E53935;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .remove-btn:hover { background: #C62828; }
+
+    .actions { display: flex; gap: 10px; margin-top: 6px; }
+    input[type="text"] {
+      flex: 1;
+      padding: 9px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      padding: 9px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #addBtn { background: #4CAF50; color: white; }
+    #addBtn:hover { background: #388E3C; }
+    #saveBtn { background: #3F51B5; color: white; margin-top: 15px; width: 100%; }
+    #saveBtn:hover { background: #303F9F; }
+
+    .note { margin-top: 20px; font-size: 11px; color: #666; text-align: center; }
+
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 9999;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: fadeIn 0.3s ease;
+    }
+    #toast.success { background: #4CAF50; }
+    #toast.error { background: #E53935; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* Confirmation modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      padding: 18px;
+      width: 360px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .modal-header { font-weight: 600; margin-bottom: 10px; font-size: 16px; }
+    .modal-body { display: flex; align-items: center; gap: 12px; }
+    .modal-body img { width: 36px; height: 36px; border-radius: 4px; }
+    .modal-body .info { font-size: 14px; }
+    .modal-body .info .url { font-size: 12px; color: #666; word-break: break-all; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+    .btn-cancel { background: #eee; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+    .btn-delete { background: #E53935; color: #fff; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>🔗 Manage URLs</h2>
+
+  <div class="card">
+    <div id="urlList">
+      <ul id="urlItems"></ul>
+    </div>
+
+    <div class="actions">
+      <input type="text" id="newUrl" placeholder="Enter a new URL (e.g. example.com or https://example.com)">
+      <button id="addBtn">+ Add</button>
+    </div>
+  </div>
+
+  <p class="note">Developed By: <strong>RainheartGalario</strong></p>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">Delete this link?</div>
+      <div class="modal-body">
+        <img id="confirmFavicon" src="" alt="favicon">
+        <div class="info">
+          <div id="confirmSiteName" style="font-weight:600;"></div>
+          <div id="confirmSiteUrl" class="url"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="confirmCancel" class="btn-cancel">Cancel</button>
+        <button id="confirmDelete" class="btn-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORTANT: load Sortable (local file) BEFORE options.js -->
+  <script src="Sortable.min.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

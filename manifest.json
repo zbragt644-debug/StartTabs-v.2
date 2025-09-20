@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "StartTabs",
+  "version": "1.0",
+  "description": "Do you always open the same websites every day?\n\nWith StartTabs, you don’t have to type or search for them again and again. Just save your favorite websites once, and open them all together with a single click.\n\n✨ What you can do:\n\n- Save your favorite websites (like Gmail, Docs, YouTube, or anything you use often)\n- Open them all at once, whenever you need them\n- Add or remove websites anytime — it’s super easy\n- Enjoy a clean and simple design anyone can use\n\nPerfect for work, school, or just your daily browsing routine.",
+  "permissions": ["tabs", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html"
+}
